@@ -335,6 +335,16 @@ sys_open(void)
     }
   }
 
+  //Verificar permisos
+  if((omode == O_RDONLY && !(ip->permisos & READ)) ||
+      (omode == O_WRONLY && !(ip->permisos & WRITE)) ||
+      (omode == O_RDWR && !(ip->permisos & READ) && !(ip->permisos & WRITE))){
+    iunlockput(ip);
+    end_op();
+    //Se devuelve, porque no tiene permisos para abrir el archivo
+    return -1;
+  }
+
   if(ip->type == T_DEVICE && (ip->major < 0 || ip->major >= NDEV)){
     iunlockput(ip);
     end_op();

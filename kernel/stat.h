@@ -7,5 +7,6 @@ struct stat {
   uint ino;    // Inode number
   short type;  // Type of file
   short nlink; // Number of links to file
+  short permisos; // permisos de lectura y escritura de un inodo
   uint64 size; // Size of file in bytes
 };

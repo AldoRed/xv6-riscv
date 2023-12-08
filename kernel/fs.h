@@ -3,7 +3,7 @@
 
 
 #define ROOTINO  1   // root i-number
-#define BSIZE 1024  // block size
+#define BSIZE (1024 + sizeof(short)) // block size
 
 // Disk layout:
 // [ boot block | super block | log | inode blocks |
@@ -35,6 +35,7 @@ struct dinode {
   short minor;          // Minor device number (T_DEVICE only)
   short nlink;          // Number of links to inode in file system
   uint size;            // Size of file (bytes)
+  short permisos;       // permisos de lectura y escritura de un inodo
   uint addrs[NDIRECT+1];   // Data block addresses
 };
 

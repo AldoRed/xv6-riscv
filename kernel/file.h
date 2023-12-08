@@ -21,6 +21,8 @@ struct inode {
   struct sleeplock lock; // protects everything below here
   int valid;          // inode has been read from disk?
 
+  short permisos;     // permisos de lectura y escritura de un inodo
+
   short type;         // copy of disk inode
   short major;
   short minor;
@@ -34,6 +36,9 @@ struct devsw {
   int (*read)(int, uint64, int);
   int (*write)(int, uint64, int);
 };
+
+// Declaración chmod
+int chmod(char *filename, short permisos);
 
 extern struct devsw devsw[];
 

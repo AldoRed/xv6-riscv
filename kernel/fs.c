@@ -208,6 +208,9 @@ ialloc(uint dev, short type)
     if(dip->type == 0){  // a free inode
       memset(dip, 0, sizeof(*dip));
       dip->type = type;
+      // Establece los permisos por defecto
+      dip->permisos = 777;
+
       log_write(bp);   // mark it allocated on the disk
       brelse(bp);
       return iget(dev, inum);
@@ -235,6 +238,7 @@ iupdate(struct inode *ip)
   dip->minor = ip->minor;
   dip->nlink = ip->nlink;
   dip->size = ip->size;
+  dip->permisos = ip->permisos;
   memmove(dip->addrs, ip->addrs, sizeof(ip->addrs));
   log_write(bp);
   brelse(bp);
@@ -308,6 +312,7 @@ ilock(struct inode *ip)
     ip->minor = dip->minor;
     ip->nlink = dip->nlink;
     ip->size = dip->size;
+    ip->permisos = ip->permisos;
     memmove(ip->addrs, dip->addrs, sizeof(ip->addrs));
     brelse(bp);
     ip->valid = 1;
@@ -462,6 +467,7 @@ stati(struct inode *ip, struct stat *st)
   st->type = ip->type;
   st->nlink = ip->nlink;
   st->size = ip->size;
+  st->permisos = ip->permisos;
 }
 
 // Read data from inode.
@@ -605,6 +611,51 @@ dirlink(struct inode *dp, char *name, uint inum)
   return 0;
 }
 
+int chmod(char *filename, short permisos) {
+  struct inode *ip;
+  begin_op();
+
+  // Busca el inodo
+  ip = namei(filename);
+  if(ip == 0) {
+    end_op();
+    return -1; //Si es que el archivo no existe
+  }
+
+  // Asegurar que el inodo esté bloqueado
+  ilock(ip);
+
+  // Cambiar los permisos
+  ip->permisos = permisos;
+
+  // Actualizar el inodo en el disco
+  iupdate(ip);
+
+  // Desbloquear el inodo
+  iunlockput(ip);
+
+  // Terminar la operación
+  end_op();
+
+  //Si es que la operación fue exitosa
+  return 0;
+
+}
+
+uint64 sys_chmod(void) {
+  char filename[MAXPATH];
+  int permisos;
+
+  argstr(0, filename, sizeof(filename));
+argint(1, &permisos);
+
+if (filename[0] == '\0' || permisos < 0) {
+    return -1;
+}
+
+  return chmod(filename, permisos);
+}
+
 // Paths
 
 // Copy the next path element from path into name.
@@ -688,7 +739,7 @@ namei(char *path)
 {
   char name[DIRSIZ];
   return namex(path, 0, name);
-}
+} 
 
 struct inode*
 nameiparent(char *path, char *name)

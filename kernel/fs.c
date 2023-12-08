@@ -626,7 +626,19 @@ int chmod(char *filename, short permisos) {
   ilock(ip);
 
   // Cambiar los permisos
-  ip->permisos = permisos;
+  if(permisos == 0) {
+    //Sin permisos
+    ip->permisos = 0;
+  }else if(permisos == 1) {
+    //Solo lectura
+    ip->permisos = 444;
+  }else if(permisos == 2) {
+    //Solo escritura
+    ip->permisos = 222;
+  }else{
+    //Lectura y escritura
+    ip->permisos = 666;
+  }
 
   // Actualizar el inodo en el disco
   iupdate(ip);
